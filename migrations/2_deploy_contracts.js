@@ -1,9 +1,7 @@
-const Doctor = artifacts.require("./Doctor.sol");
-const MedicalRecord = artifacts.require("./MedicalRecord.sol");
-const Patient = artifacts.require("./Patient.sol");
+const Healthcare = artifacts.require("./Healthcare.sol");
+const User = artifacts.require("./User.sol");
 
 module.exports = function (deployer) {
-  deployer.deploy(Doctor);
-  deployer.deploy(MedicalRecord);
-  deployer.deploy(Patient);
+  deployer.deploy(Healthcare);
+  deployer.deploy(User);
 };
