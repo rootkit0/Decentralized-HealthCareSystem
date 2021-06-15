@@ -37,8 +37,6 @@ contract User {
             //Default user role is patient
             //Only admins can upgrade role to doctor
             userList[userId].userRole = "patient";
-            //Create patient on healthcare contract
-            healthcare.createPatient();
         }
         userList[userId].idCardNumber = idCardNumber;
         userList[userId].healthCardId = healthCardId;
@@ -68,9 +66,6 @@ contract User {
         require(msg.sender == admin);
         require(userList[userId].userId != address(0));
         userList[userId].userRole = userRole;
-        if(compareStrings(userRole, "doctor")) {
-            healthcare.createDoctor();
-        }
     }
 
     function validateIdCardNumber(string memory idCardNumber) private pure returns(bool) {            

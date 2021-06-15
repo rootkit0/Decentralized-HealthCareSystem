@@ -8,6 +8,7 @@ contract Healthcare {
     string private userRole;
     uint private medicalRecordId;
     uint private treatmentId;
+    uint private randSalt;
     constructor() {
         //All users admins for testing purposes
         //For final version set specific addresses
@@ -15,6 +16,7 @@ contract Healthcare {
         userRole = user.getUserRole();
         medicalRecordId = 0;
         treatmentId = 0;
+        randSalt = 0;
     }
 
     struct Patient {
@@ -26,10 +28,11 @@ contract Healthcare {
         string phone;
         string homeAddress;
         string gender;
-        uint assignedDoctor;
+        address assignedDoctor;
         uint medicalRecordId;
     }
     mapping(address => Patient) public patientList;
+    address[] private patientAddresses;
 
     struct Doctor {
         address doctorId;
@@ -41,6 +44,7 @@ contract Healthcare {
         address[] assignedPatients;
     }
     mapping(address => Doctor) public doctorList;
+    address[] private doctorAddresses;
 
     struct MedicalRecord {
         uint medicalRecordId;
@@ -50,7 +54,7 @@ contract Healthcare {
         string immunizations;
         string bloodType;
         bool hasInsurance;
-        Treatment[] treatments;
+        uint[] treatmentsIds;
     }
     mapping(uint => MedicalRecord) public medicalRecordList;
 
@@ -66,17 +70,18 @@ contract Healthcare {
     }
     mapping(uint => Treatment) public treatmentList;
 
-    function createPatient(Patient memory patient) public {
+    function createPatient() public {
+        require(patientList[msg.sender].patientId == address(0));
+        //Set patient address
         patientList[msg.sender].patientId = msg.sender;
-        patientList[msg.sender].name = patient.name;
-        patientList[msg.sender].age = patient.age;
-        patientList[msg.sender].dateOfBirth = patient.dateOfBirth;
-        patientList[msg.sender].email = patient.email;
-        patientList[msg.sender].phone = patient.phone;
-        patientList[msg.sender].homeAddress = patient.homeAddress;
-        patientList[msg.sender].gender = patient.gender;
-        patientList[msg.sender].assignedDoctor = patient.assignedDoctor;
+        patientAddresses.push(msg.sender);
+        //Assign random doctor to the patient
+        patientList[msg.sender].assignedDoctor = assignRandomDoctor();
+        //Assign patient to the obtained doctor
+        doctorList[patientList[msg.sender].assignedDoctor].assignedPatients.push(msg.sender);
+        //Get medicalRecordId and create the object
         medicalRecordId += 1;
+        createMedicalRecord(medicalRecordId);
         patientList[msg.sender].medicalRecordId = medicalRecordId;
     }
 
@@ -97,15 +102,11 @@ contract Healthcare {
         patientList[patientAddress].assignedDoctor = patient.assignedDoctor;
     }
     
-    function createDoctor(Doctor memory doctor) public {
+    function createDoctor() public {
         require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
+        require(doctorList[msg.sender].doctorId == address(0));
+        //Set doctor address
         doctorList[msg.sender].doctorId = msg.sender;
-        doctorList[msg.sender].name = doctor.name;
-        doctorList[msg.sender].email = doctor.email;
-        doctorList[msg.sender].phone = doctor.phone;
-        doctorList[msg.sender].assignedHospital = doctor.assignedHospital;
-        doctorList[msg.sender].medicalSpeciality = doctor.medicalSpeciality;
-        doctorList[msg.sender].assignedPatients = doctor.assignedPatients;
     }
 
     function readDoctor(address doctorAddress) public view returns(Doctor memory) {
@@ -125,8 +126,10 @@ contract Healthcare {
         doctorList[doctorAddress].assignedPatients = doctor.assignedPatients;
     }
 
-    function createMedicalRecord() public {
-        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
+    function createMedicalRecord(uint _medicalRecordId) public {
+        require(medicalRecordList[medicalRecordId].medicalRecordId == 0);
+        //Set medicalRecordId
+        medicalRecordList[_medicalRecordId].medicalRecordId = _medicalRecordId;
     }
 
     function readMedicalRecord(address patientAddress) public view returns (MedicalRecord memory) {
@@ -150,7 +153,19 @@ contract Healthcare {
         require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
     }
 
+    function assignRandomDoctor() public returns(address) {
+        require(doctorAddresses.length >= 1);
+        uint randomPosition = randMod(doctorAddresses.length);
+        require(doctorList[doctorAddresses[randomPosition]].doctorId != address(0));
+        return doctorAddresses[randomPosition];
+    }
+
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    }
+
+    function randMod(uint modulus) internal returns(uint) {
+        ++randSalt;
+        return uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, randSalt))) % modulus;
     }
 }
