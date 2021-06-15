@@ -1,8 +1,10 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.4.22 <0.9.0;
+import "./Healthcare.sol";
 
-contract User {    
-    address public admin;
+contract User {
+    address private admin;
+    Healthcare private healthcare;
     constructor() {
         //All users admins for testing purposes
         //For final version set specific addresses
@@ -25,7 +27,6 @@ contract User {
         require(validateIdCardNumber(idCardNumber) == true);
         require(validateHealthCardId(healthCardId) == true);
         //Check in government DB that idCardNumber and healthCardId matches
-
         //Register the user and set password
         address userId = msg.sender;
         userList[userId].userId = userId;
@@ -36,6 +37,8 @@ contract User {
             //Default user role is patient
             //Only admins can upgrade role to doctor
             userList[userId].userRole = "patient";
+            //Create patient on healthcare contract
+            healthcare.createPatient();
         }
         userList[userId].idCardNumber = idCardNumber;
         userList[userId].healthCardId = healthCardId;
@@ -65,6 +68,9 @@ contract User {
         require(msg.sender == admin);
         require(userList[userId].userId != address(0));
         userList[userId].userRole = userRole;
+        if(compareStrings(userRole, "doctor")) {
+            healthcare.createDoctor();
+        }
     }
 
     function validateIdCardNumber(string memory idCardNumber) private pure returns(bool) {            
