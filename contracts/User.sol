@@ -1,10 +1,8 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.4.22 <0.9.0;
-import "./Healthcare.sol";
 
 contract User {
     address private admin;
-    Healthcare private healthcare;
     constructor() {
         //All users admins for testing purposes
         //For final version set specific addresses
