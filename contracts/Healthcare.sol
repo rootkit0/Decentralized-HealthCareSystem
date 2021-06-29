@@ -113,6 +113,7 @@ contract Healthcare {
     }
 
     function createMedicalRecord() public {
+        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
         require(medicalRecordList[msg.sender].medicalRecordId == address(0));
         //Set medical record id
         medicalRecordList[msg.sender].medicalRecordId = msg.sender;
@@ -124,6 +125,7 @@ contract Healthcare {
     }
 
     function updateMedicalRecord(MedicalRecord memory medicalRecord, address personAddress) public {
+        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
         require(medicalRecordList[personAddress].medicalRecordId != address(0));
         medicalRecordList[personAddress].medications = medicalRecord.medications;
         medicalRecordList[personAddress].allergies = medicalRecord.allergies;
@@ -135,6 +137,7 @@ contract Healthcare {
     }
 
     function createTreatment() public {
+        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
         treatmentId += 1;
         require(treatmentList[treatmentId].treatmentId == 0);
         treatmentList[treatmentId].treatmentId = treatmentId;
@@ -146,6 +149,7 @@ contract Healthcare {
     }
 
     function updateTreatment(Treatment memory treatment, uint _treatmentId) public {
+        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
         require(treatmentList[_treatmentId].treatmentId != 0);
         treatmentList[_treatmentId].patientId = treatment.patientId;
         treatmentList[_treatmentId].doctorId = treatment.doctorId;
