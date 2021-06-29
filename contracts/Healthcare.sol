@@ -26,6 +26,7 @@ contract Healthcare {
         string phone;
         string homeAddress;
         string gender;
+        address assignedDoctor;
     }
     mapping(address => Patient) public patientList;
 
@@ -36,8 +37,10 @@ contract Healthcare {
         string phone;
         string assignedHospital;
         string medicalSpeciality;
+        address[] assignedPatients;
     }
     mapping(address => Doctor) public doctorList;
+    address[] private doctorAddresses;
 
     struct MedicalRecord {
         address medicalRecordId;
@@ -69,6 +72,11 @@ contract Healthcare {
         patientList[msg.sender].patientId = msg.sender;
         //Create the patient medical record
         createMedicalRecord();
+        //Assign random doctor to the new patient
+        address _assignedDoctor = getRandomDoctor();
+        patientList[msg.sender].assignedDoctor = _assignedDoctor;
+        //Add the new patient to the assigned doctor patients list
+        doctorList[_assignedDoctor].assignedPatients.push(msg.sender);
     }
 
     function readPatient(address patientAddress) public view returns(Patient memory) {
@@ -92,6 +100,7 @@ contract Healthcare {
         require(doctorList[msg.sender].doctorId == address(0));
         //Set doctor address
         doctorList[msg.sender].doctorId = msg.sender;
+        doctorAddresses.push(msg.sender);
         //Create the doctor medical record
         createMedicalRecord();
     }
@@ -167,5 +176,12 @@ contract Healthcare {
     function randNumber(uint modulus) internal returns(uint) {
         ++randSalt;
         return uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, randSalt))) % modulus;
+    }
+
+    function getRandomDoctor() public returns(address) {
+        require(doctorAddresses.length >= 1);
+        uint randomPosition = randNumber(doctorAddresses.length);
+        require(doctorList[doctorAddresses[randomPosition]].doctorId != address(0));
+        return doctorAddresses[randomPosition];
     }
 }
