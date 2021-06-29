@@ -24,8 +24,8 @@ contract User {
         //Check idCardNumber and healthCardId format
         require(validateIdCardNumber(idCardNumber) == true);
         require(validateHealthCardId(healthCardId) == true);
-        //Check in government DB that idCardNumber and healthCardId matches
-        //Register the user and set password
+        //Assuming: Check in government DB that idCardNumber and healthCardId matches
+        //Register the user
         address userId = msg.sender;
         userList[userId].userId = userId;
         if(userId == admin) {
@@ -33,7 +33,7 @@ contract User {
         }
         else {
             //Default user role is patient
-            //Only admins can upgrade role to doctor
+            //Only admins can upgrade roles
             userList[userId].userRole = "patient";
         }
         userList[userId].idCardNumber = idCardNumber;
@@ -50,9 +50,16 @@ contract User {
         return userList[msg.sender].passwordHash;
 	}
 
-    function updateUserPassword(string memory passwordHash) public {
+    function updateUserPassword(string memory idCardNumber, string memory healthCardId, string memory oldPasswordHash, string memory newPasswordHash) public {
+        //Check that user exists
         require(userList[msg.sender].userId != address(0));
-        userList[msg.sender].passwordHash = passwordHash;
+        //Compare given ids with ones associated with user account
+        require(compareStrings(userList[msg.sender].idCardNumber, idCardNumber));
+        require(compareStrings(userList[msg.sender].healthCardId, healthCardId));
+        //Check old password match
+        require(compareStrings(userList[msg.sender].passwordHash, oldPasswordHash));
+        //Update password
+        userList[msg.sender].passwordHash = newPasswordHash;
     }
 
     function getUserRole() public view returns(string memory){
@@ -61,7 +68,7 @@ contract User {
     }
 
     function updateUserRole(address userId, string memory userRole) public {
-        require(msg.sender == admin);
+        require(compareStrings(userList[msg.sender].userRole, "admin"));
         require(userList[userId].userId != address(0));
         userList[userId].userRole = userRole;
     }
