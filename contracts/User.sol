@@ -2,11 +2,14 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 contract User {
-    address private admin;
+    mapping(address => bool) private admins;
     constructor() {
         //All users admins for testing purposes
         //For final version set specific addresses
-        admin = msg.sender;
+        admins[msg.sender] = true;
+    }
+    function isAdmin() public view returns(bool) {
+        return admins[msg.sender];
     }
 
     struct UserModel {
@@ -18,59 +21,61 @@ contract User {
     }
     mapping(address => UserModel) userList;
 
-	function registerUser(string memory idCardNumber, string memory healthCardId, string memory passwordHash) public {
-        //Check that user doesn't exists
-        require(userList[msg.sender].userId == address(0));
-        //Check idCardNumber and healthCardId format
-        require(validateIdCardNumber(idCardNumber) == true);
-        require(validateHealthCardId(healthCardId) == true);
+	function signupUser(string memory idCardNumber, string memory healthCardId, string memory passwordHash) public returns(bool) {
+        //Check that user don't exists
+        require(userList[msg.sender].userId == address(0), "User already exists!");
+        //Check idCardNumber and healthCardId formats
+        require(validateIdCardNumber(idCardNumber) == true, "Wrong ID Card Number format");
+        require(validateHealthCardId(healthCardId) == true, "Wrong HealthCardID format");
         //Assuming: Check in government DB that idCardNumber and healthCardId matches
         //Register the user
         address userId = msg.sender;
         userList[userId].userId = userId;
-        if(userId == admin) {
+        if(isAdmin()) {
             userList[userId].userRole = "admin";
         }
         else {
-            //Default user role is patient
-            //Only admins can upgrade roles
+            //Default user role is patient (only admins can upgrade user roles)
             userList[userId].userRole = "patient";
         }
         userList[userId].idCardNumber = idCardNumber;
         userList[userId].healthCardId = healthCardId;
         userList[userId].passwordHash = passwordHash;
+        return true;
 	}
 
-    function getPasswordHash(string memory idCardNumber, string memory healthCardId) public view returns(string memory) {
+    function loginUser(string memory idCardNumber, string memory healthCardId, string memory passwordHash) public view returns(bool) {
         //Check that user exists
-        require(userList[msg.sender].userId != address(0));
-        //Compare given ids with ones associated with user account
-        require(compareStrings(userList[msg.sender].idCardNumber, idCardNumber));
-        require(compareStrings(userList[msg.sender].healthCardId, healthCardId));
-        return userList[msg.sender].passwordHash;
-	}
-
-    function updateUserPassword(string memory idCardNumber, string memory healthCardId, string memory oldPasswordHash, string memory newPasswordHash) public {
-        //Check that user exists
-        require(userList[msg.sender].userId != address(0));
-        //Compare given ids with ones associated with user account
-        require(compareStrings(userList[msg.sender].idCardNumber, idCardNumber));
-        require(compareStrings(userList[msg.sender].healthCardId, healthCardId));
-        //Check old password match
-        require(compareStrings(userList[msg.sender].passwordHash, oldPasswordHash));
-        //Update password
-        userList[msg.sender].passwordHash = newPasswordHash;
+        require(userList[msg.sender].userId != address(0), "User don't exists!");
+        //Verify input parameters
+        require(compareStrings(userList[msg.sender].idCardNumber, idCardNumber), "ID Card Number doesn't match!");
+        require(compareStrings(userList[msg.sender].healthCardId, healthCardId), "HealthCardId doesn't match!");
+        require(compareStrings(userList[msg.sender].passwordHash, passwordHash), "Passwords doesn't match!");
+        return true;
     }
 
-    function getUserRole() public view returns(string memory){
-        require(userList[msg.sender].userId != address(0));
+    function updateUserPassword(string memory idCardNumber, string memory healthCardId, string memory oldPasswordHash, string memory newPasswordHash) public returns(bool) {
+        //Check that user exists
+        require(userList[msg.sender].userId != address(0), "User don't exists!");
+        //Verify input parameters
+        require(compareStrings(userList[msg.sender].idCardNumber, idCardNumber), "ID Card Number doesn't match!");
+        require(compareStrings(userList[msg.sender].healthCardId, healthCardId), "HealthCardId doesn't match!");
+        require(compareStrings(userList[msg.sender].passwordHash, oldPasswordHash), "Passwords doesn't match!");
+        //Update password
+        userList[msg.sender].passwordHash = newPasswordHash;
+        return true;
+    }
+
+    function getUserRole() public view returns(string memory) {
+        require(userList[msg.sender].userId != address(0), "User don't exists!");
         return userList[msg.sender].userRole;
     }
 
-    function updateUserRole(address userId, string memory userRole) public {
-        require(compareStrings(userList[msg.sender].userRole, "admin"));
-        require(userList[userId].userId != address(0));
+    function updateUserRole(address userId, string memory userRole) public returns(bool) {
+        require(compareStrings(userList[msg.sender].userRole, "admin"), "You don't have admin permissions!");
+        require(userList[userId].userId != address(0), "User don't exists!");
         userList[userId].userRole = userRole;
+        return true;
     }
 
     function validateIdCardNumber(string memory idCardNumber) private pure returns(bool) {            

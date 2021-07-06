@@ -3,24 +3,25 @@ pragma solidity >=0.4.22 <0.9.0;
 import "./User.sol";
 
 contract Healthcare {
-    address private admin;
+    mapping(address => bool) private admins;
     User private user;
-    string private userRole;
     uint private treatmentId;
     uint private randSalt;
     constructor() {
         //All users admins for testing purposes
         //For final version set specific addresses
-        admin = msg.sender;
-        userRole = user.getUserRole();
+        admins[msg.sender] = true;
+        user = new User();
         treatmentId = 0;
-        randSalt = 0;
+        randSalt = 1;
+    }
+    function isAdmin() public view returns(bool) {
+        return admins[msg.sender];
     }
 
     struct Patient {
         address patientId;
         string name;
-        uint age;
         uint dateOfBirth;
         string email;
         string phone;
@@ -56,8 +57,8 @@ contract Healthcare {
 
     struct Treatment {
         uint treatmentId;
-        uint patientId;
-        uint doctorId;
+        address patientId;
+        address doctorId;
         string diagnosis;
         string medicine;
         uint fromDate;
@@ -66,10 +67,22 @@ contract Healthcare {
     }
     mapping(uint => Treatment) public treatmentList;
 
-    function createPatient() public {
-        require(patientList[msg.sender].patientId == address(0));
-        //Set patient address
+    function createPatient( string memory name,
+                            uint dateOfBirth,
+                            string memory email,
+                            string memory phone,
+                            string memory homeAddress,
+                            string memory gender) public {
+        require(patientList[msg.sender].patientId == address(0), "Patient already exist!");
+        require(doctorList[msg.sender].doctorId == address(0), "This address is assigned to a doctor!");
+        //Set patient data
         patientList[msg.sender].patientId = msg.sender;
+        patientList[msg.sender].name = name;
+        patientList[msg.sender].dateOfBirth = dateOfBirth;
+        patientList[msg.sender].email = email;
+        patientList[msg.sender].phone = phone;
+        patientList[msg.sender].homeAddress = homeAddress;
+        patientList[msg.sender].gender = gender;
         //Create the patient medical record
         createMedicalRecord();
         //Assign random doctor to the new patient
@@ -80,108 +93,190 @@ contract Healthcare {
     }
 
     function readPatient(address patientAddress) public view returns(Patient memory) {
-        require(patientList[patientAddress].patientId != address(0));
+        require(patientList[patientAddress].patientId != address(0), "Patient don't exist!");
         return patientList[patientAddress];
     }
 
-    function updatePatient(Patient memory patient, address patientAddress) public {
-        require(patientList[patientAddress].patientId != address(0));
-        patientList[patientAddress].name = patient.name;
-        patientList[patientAddress].age = patient.age;
-        patientList[patientAddress].dateOfBirth = patient.dateOfBirth;
-        patientList[patientAddress].email = patient.email;
-        patientList[patientAddress].phone = patient.phone;
-        patientList[patientAddress].homeAddress = patient.homeAddress;
-        patientList[patientAddress].gender = patient.gender;
+    function updatePatient( address patientAddress,
+                            string memory name,
+                            uint dateOfBirth,
+                            string memory email,
+                            string memory phone,
+                            string memory homeAddress,
+                            string memory gender) public {
+        require(patientList[patientAddress].patientId != address(0), "Patient don't exist!");
+        //Set patient data
+        patientList[patientAddress].name = name;
+        patientList[patientAddress].dateOfBirth = dateOfBirth;
+        patientList[patientAddress].email = email;
+        patientList[patientAddress].phone = phone;
+        patientList[patientAddress].homeAddress = homeAddress;
+        patientList[patientAddress].gender = gender;
     }
     
-    function createDoctor() public {
-        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
-        require(doctorList[msg.sender].doctorId == address(0));
-        //Set doctor address
+    function createDoctor(  string memory name,
+                            string memory email,
+                            string memory phone,
+                            string memory assignedHospital,
+                            string memory medicalSpeciality) public {
+        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
+        require(doctorList[msg.sender].doctorId == address(0), "Doctor already exist!");
+        //Set doctor data
         doctorList[msg.sender].doctorId = msg.sender;
-        doctorAddresses.push(msg.sender);
+        doctorList[msg.sender].name = name;
+        doctorList[msg.sender].email = email;
+        doctorList[msg.sender].phone = phone;
+        doctorList[msg.sender].assignedHospital = assignedHospital;
+        doctorList[msg.sender].medicalSpeciality = medicalSpeciality;
         //Create the doctor medical record
         createMedicalRecord();
+        //Push doctor to doctors list
+        doctorAddresses.push(msg.sender);
     }
 
     function readDoctor(address doctorAddress) public view returns(Doctor memory) {
-        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
-        require(doctorList[doctorAddress].doctorId != address(0));
+        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
+        require(doctorList[doctorAddress].doctorId != address(0), "Doctor don't exist!");
         return doctorList[doctorAddress];
     }
 
-    function updateDoctor(Doctor memory doctor, address doctorAddress) public {
-        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
-        require(doctorList[doctorAddress].doctorId != address(0));
-        doctorList[doctorAddress].name = doctor.name;
-        doctorList[doctorAddress].email = doctor.email;
-        doctorList[doctorAddress].phone = doctor.phone;
-        doctorList[doctorAddress].assignedHospital = doctor.assignedHospital;
-        doctorList[doctorAddress].medicalSpeciality = doctor.medicalSpeciality;
+    function updateDoctor(  address doctorAddress,
+                            string memory name,
+                            string memory email,
+                            string memory phone,
+                            string memory assignedHospital,
+                            string memory medicalSpeciality) public {
+        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
+        require(doctorList[doctorAddress].doctorId != address(0), "Doctor don't exist!");
+        //Set doctor data
+        doctorList[doctorAddress].name = name;
+        doctorList[doctorAddress].email = email;
+        doctorList[doctorAddress].phone = phone;
+        doctorList[doctorAddress].assignedHospital = assignedHospital;
+        doctorList[doctorAddress].medicalSpeciality = medicalSpeciality;
+    }
+
+    function upgradePatientToDoctor() public {
+        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
+        require(patientList[msg.sender].patientId != address(0), "Patient don't exist!");
+        require(doctorList[msg.sender].doctorId == address(0), "Doctor already exist!");
+        //Get patient data
+        Patient memory patient = readPatient(msg.sender);
+        //Create doctor with obtained data
+        createDoctor(patient.name, patient.email, patient.phone, "", "");
+        //Delete patient from mapping
+        delete patientList[msg.sender];
+    }
+
+    function downgradeDoctorToPatient() public {
+        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
+        require(patientList[msg.sender].patientId == address(0), "Patient already exist!");
+        require(doctorList[msg.sender].doctorId != address(0), "Doctor don't exist!");
+        //Get doctors data
+        Doctor memory doctor = readDoctor(msg.sender);
+        //Create patient with obtained data
+        createPatient(doctor.name, 0, doctor.email, doctor.phone, "", "");
+        //Delete doctor from mapping
+        delete doctorList[msg.sender];
     }
 
     function createMedicalRecord() public {
-        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
-        require(medicalRecordList[msg.sender].medicalRecordId == address(0));
-        //Set medical record id
+        require(medicalRecordList[msg.sender].medicalRecordId == address(0), "Medical record already exist!");
         medicalRecordList[msg.sender].medicalRecordId = msg.sender;
     }
 
-    function readMedicalRecord(address personAddress) public view returns (MedicalRecord memory) {
-        require(medicalRecordList[personAddress].medicalRecordId != address(0));
-        return medicalRecordList[personAddress];
+    function readMedicalRecord(address medicalRecordId) public view returns (MedicalRecord memory) {
+        require(medicalRecordList[medicalRecordId].medicalRecordId != address(0), "Medical record don't exist!");
+        //A patient can only access his medical record
+        if(compareStrings(user.getUserRole(), "patient")) {
+            require(medicalRecordList[medicalRecordId].medicalRecordId == msg.sender, "You don't have permission to access this data!");
+        }
+        return medicalRecordList[medicalRecordId];
     }
 
-    function updateMedicalRecord(MedicalRecord memory medicalRecord, address personAddress) public {
-        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
-        require(medicalRecordList[personAddress].medicalRecordId != address(0));
-        medicalRecordList[personAddress].medications = medicalRecord.medications;
-        medicalRecordList[personAddress].allergies = medicalRecord.allergies;
-        medicalRecordList[personAddress].illnesses = medicalRecord.illnesses;
-        medicalRecordList[personAddress].immunizations = medicalRecord.immunizations;
-        medicalRecordList[personAddress].bloodType = medicalRecord.bloodType;
-        medicalRecordList[personAddress].hasInsurance = medicalRecord.hasInsurance;
-        medicalRecordList[personAddress].treatmentsIds = medicalRecord.treatmentsIds;
+    function updateMedicalRecord(   address medicalRecordId,
+                                    string memory medications,
+                                    string memory allergies,
+                                    string memory illnesses,
+                                    string memory immunizations,
+                                    string memory bloodType,
+                                    bool hasInsurance,
+                                    uint[] memory treatmentsIds) public {
+        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
+        require(medicalRecordList[medicalRecordId].medicalRecordId != address(0), "Medical record don't exist!");
+        //Set medical record data
+        medicalRecordList[medicalRecordId].medications = medications;
+        medicalRecordList[medicalRecordId].allergies = allergies;
+        medicalRecordList[medicalRecordId].illnesses = illnesses;
+        medicalRecordList[medicalRecordId].immunizations = immunizations;
+        medicalRecordList[medicalRecordId].bloodType = bloodType;
+        medicalRecordList[medicalRecordId].hasInsurance = hasInsurance;
+        medicalRecordList[medicalRecordId].treatmentsIds = treatmentsIds;
     }
 
-    function createTreatment() public {
-        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
+    function createTreatment(   address patientId,
+                                address doctorId,
+                                string memory diagnosis,
+                                string memory medicine,
+                                uint fromDate,
+                                uint toDate,
+                                uint bill) public {
+        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
         treatmentId += 1;
-        require(treatmentList[treatmentId].treatmentId == 0);
+        require(treatmentList[treatmentId].treatmentId == 0, "Treatment already exist!");
+        //Set treatment data
         treatmentList[treatmentId].treatmentId = treatmentId;
+        treatmentList[treatmentId].patientId = patientId;
+        treatmentList[treatmentId].doctorId = doctorId;
+        treatmentList[treatmentId].diagnosis = diagnosis;
+        treatmentList[treatmentId].medicine = medicine;
+        treatmentList[treatmentId].fromDate = fromDate;
+        treatmentList[treatmentId].toDate = toDate;
+        treatmentList[treatmentId].bill = bill;
     }
 
     function readTreatment(uint _treatmentId) public view returns (Treatment memory){
-        require(treatmentList[_treatmentId].treatmentId != 0);
+        require(treatmentList[_treatmentId].treatmentId != 0, "Treatment don't exist!");
+        //A patient can only access his treatments
+        if(compareStrings(user.getUserRole(), "patient")) {
+            require(treatmentList[_treatmentId].patientId == msg.sender, "You don't have permission to access this data!");
+        }
         return treatmentList[_treatmentId];
     }
 
-    function updateTreatment(Treatment memory treatment, uint _treatmentId) public {
-        require(compareStrings(userRole, "admin") || compareStrings(userRole, "doctor"));
-        require(treatmentList[_treatmentId].treatmentId != 0);
-        treatmentList[_treatmentId].patientId = treatment.patientId;
-        treatmentList[_treatmentId].doctorId = treatment.doctorId;
-        treatmentList[_treatmentId].diagnosis = treatment.diagnosis;
-        treatmentList[_treatmentId].medicine = treatment.medicine;
-        treatmentList[_treatmentId].fromDate = treatment.fromDate;
-        treatmentList[_treatmentId].toDate = treatment.toDate;
-        treatmentList[_treatmentId].bill = treatment.bill;
+    function updateTreatment(   uint _treatmentId,
+                                address patientId,
+                                address doctorId,
+                                string memory diagnosis,
+                                string memory medicine,
+                                uint fromDate,
+                                uint toDate,
+                                uint bill) public {
+        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
+        require(treatmentList[_treatmentId].treatmentId != 0, "Treatment don't exist!");
+        //Set treatment data
+        treatmentList[_treatmentId].patientId = patientId;
+        treatmentList[_treatmentId].doctorId = doctorId;
+        treatmentList[_treatmentId].diagnosis = diagnosis;
+        treatmentList[_treatmentId].medicine = medicine;
+        treatmentList[_treatmentId].fromDate = fromDate;
+        treatmentList[_treatmentId].toDate = toDate;
+        treatmentList[_treatmentId].bill = bill;
     }
 
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 
-    function randNumber(uint modulus) internal returns(uint) {
+    function randNumber(uint modulus) private returns(uint) {
         ++randSalt;
         return uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, randSalt))) % modulus;
     }
 
-    function getRandomDoctor() public returns(address) {
-        require(doctorAddresses.length >= 1);
+    function getRandomDoctor() private returns(address) {
+        require(doctorAddresses.length >= 1, "There is no doctor registrated in the system!");
         uint randomPosition = randNumber(doctorAddresses.length);
-        require(doctorList[doctorAddresses[randomPosition]].doctorId != address(0));
+        require(doctorList[doctorAddresses[randomPosition]].doctorId != address(0), "Doctor don't exist!");
         return doctorAddresses[randomPosition];
     }
 }
