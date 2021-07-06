@@ -1,5 +1,6 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.4.22 <0.9.0;
+pragma experimental ABIEncoderV2;
 import "./User.sol";
 
 contract Healthcare {
@@ -7,7 +8,7 @@ contract Healthcare {
     User private user;
     uint private treatmentId;
     uint private randSalt;
-    constructor() {
+    constructor() public {
         //All users admins for testing purposes
         //For final version set specific addresses
         admins[msg.sender] = true;

@@ -1,7 +1,7 @@
-const Healthcare = artifacts.require("./Healthcare.sol");
 const User = artifacts.require("./User.sol");
+const Healthcare = artifacts.require("./Healthcare.sol");
 
 module.exports = function (deployer) {
-  deployer.deploy(Healthcare);
   deployer.deploy(User);
+  deployer.deploy(Healthcare);
 };

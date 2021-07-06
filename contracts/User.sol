@@ -1,9 +1,10 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.4.22 <0.9.0;
+pragma experimental ABIEncoderV2;
 
 contract User {
     mapping(address => bool) private admins;
-    constructor() {
+    constructor() public {
         //All users admins for testing purposes
         //For final version set specific addresses
         admins[msg.sender] = true;
