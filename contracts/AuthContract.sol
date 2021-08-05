@@ -2,7 +2,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-contract User {
+contract AuthContract {
     mapping(address => bool) private admins;
     constructor() public {
         //All users admins for testing purposes
@@ -28,7 +28,6 @@ contract User {
         //Check idCardNumber and healthCardId formats
         require(validateIdCardNumber(idCardNumber) == true, "Wrong ID Card Number format");
         require(validateHealthCardId(healthCardId) == true, "Wrong HealthCardID format");
-        //Assuming: Check in government DB that idCardNumber and healthCardId matches
         //Register the user
         address userId = msg.sender;
         userList[userId].userId = userId;
@@ -73,7 +72,7 @@ contract User {
     }
 
     function updateUserRole(address userId, string memory userRole) public returns(bool) {
-        require(compareStrings(userList[msg.sender].userRole, "admin"), "You don't have admin permissions!");
+        require(!isAdmin(), "You don't have admin permissions!");
         require(userList[userId].userId != address(0), "User don't exists!");
         userList[userId].userRole = userRole;
         return true;

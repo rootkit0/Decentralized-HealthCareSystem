@@ -1,23 +1,13 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.4.22 <0.9.0;
 pragma experimental ABIEncoderV2;
-import "./User.sol";
 
-contract Healthcare {
-    mapping(address => bool) private admins;
-    User private user;
+contract HealthcareContract {
     uint private treatmentId;
-    uint private randSalt;
+    uint private randomInt;
     constructor() public {
-        //All users admins for testing purposes
-        //For final version set specific addresses
-        admins[msg.sender] = true;
-        user = new User();
         treatmentId = 0;
-        randSalt = 1;
-    }
-    function isAdmin() public view returns(bool) {
-        return admins[msg.sender];
+        randomInt = 1;
     }
 
     struct Patient {
@@ -28,9 +18,10 @@ contract Healthcare {
         string phone;
         string homeAddress;
         string gender;
-        address assignedDoctor;
+        address assignedDoctorId;
     }
     mapping(address => Patient) public patientList;
+    address[] private patientAddresses;
 
     struct Doctor {
         address doctorId;
@@ -39,7 +30,7 @@ contract Healthcare {
         string phone;
         string assignedHospital;
         string medicalSpeciality;
-        address[] assignedPatients;
+        address[] assignedPatientsIds;
     }
     mapping(address => Doctor) public doctorList;
     address[] private doctorAddresses;
@@ -68,29 +59,20 @@ contract Healthcare {
     }
     mapping(uint => Treatment) public treatmentList;
 
-    function createPatient( string memory name,
-                            uint dateOfBirth,
-                            string memory email,
-                            string memory phone,
-                            string memory homeAddress,
-                            string memory gender) public {
+    function createPatient() public {
         require(patientList[msg.sender].patientId == address(0), "Patient already exist!");
         require(doctorList[msg.sender].doctorId == address(0), "This address is assigned to a doctor!");
-        //Set patient data
+        //Set address
         patientList[msg.sender].patientId = msg.sender;
-        patientList[msg.sender].name = name;
-        patientList[msg.sender].dateOfBirth = dateOfBirth;
-        patientList[msg.sender].email = email;
-        patientList[msg.sender].phone = phone;
-        patientList[msg.sender].homeAddress = homeAddress;
-        patientList[msg.sender].gender = gender;
         //Create the patient medical record
         createMedicalRecord();
+        //Add address record to patientAddresses
+        patientAddresses.push(msg.sender);
         //Assign random doctor to the new patient
-        address _assignedDoctor = getRandomDoctor();
-        patientList[msg.sender].assignedDoctor = _assignedDoctor;
-        //Add the new patient to the assigned doctor patients list
-        doctorList[_assignedDoctor].assignedPatients.push(msg.sender);
+        address _assignedDoctorId = getRandomDoctor();
+        patientList[msg.sender].assignedDoctorId = _assignedDoctorId;
+        //Add the new patient to the doctor list of assigned patients
+        doctorList[_assignedDoctorId].assignedPatientsIds.push(msg.sender);
     }
 
     function readPatient(address patientAddress) public view returns(Patient memory) {
@@ -115,28 +97,18 @@ contract Healthcare {
         patientList[patientAddress].gender = gender;
     }
     
-    function createDoctor(  string memory name,
-                            string memory email,
-                            string memory phone,
-                            string memory assignedHospital,
-                            string memory medicalSpeciality) public {
-        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
+    function createDoctor() public {
         require(doctorList[msg.sender].doctorId == address(0), "Doctor already exist!");
-        //Set doctor data
+        require(patientList[msg.sender].patientId == address(0), "This address is assigned to a patient!");
+        //Set address
         doctorList[msg.sender].doctorId = msg.sender;
-        doctorList[msg.sender].name = name;
-        doctorList[msg.sender].email = email;
-        doctorList[msg.sender].phone = phone;
-        doctorList[msg.sender].assignedHospital = assignedHospital;
-        doctorList[msg.sender].medicalSpeciality = medicalSpeciality;
         //Create the doctor medical record
         createMedicalRecord();
-        //Push doctor to doctors list
+        //Add address record to doctorAddresses
         doctorAddresses.push(msg.sender);
     }
 
     function readDoctor(address doctorAddress) public view returns(Doctor memory) {
-        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
         require(doctorList[doctorAddress].doctorId != address(0), "Doctor don't exist!");
         return doctorList[doctorAddress];
     }
@@ -147,7 +119,6 @@ contract Healthcare {
                             string memory phone,
                             string memory assignedHospital,
                             string memory medicalSpeciality) public {
-        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
         require(doctorList[doctorAddress].doctorId != address(0), "Doctor don't exist!");
         //Set doctor data
         doctorList[doctorAddress].name = name;
@@ -157,30 +128,6 @@ contract Healthcare {
         doctorList[doctorAddress].medicalSpeciality = medicalSpeciality;
     }
 
-    function upgradePatientToDoctor() public {
-        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
-        require(patientList[msg.sender].patientId != address(0), "Patient don't exist!");
-        require(doctorList[msg.sender].doctorId == address(0), "Doctor already exist!");
-        //Get patient data
-        Patient memory patient = readPatient(msg.sender);
-        //Create doctor with obtained data
-        createDoctor(patient.name, patient.email, patient.phone, "", "");
-        //Delete patient from mapping
-        delete patientList[msg.sender];
-    }
-
-    function downgradeDoctorToPatient() public {
-        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
-        require(patientList[msg.sender].patientId == address(0), "Patient already exist!");
-        require(doctorList[msg.sender].doctorId != address(0), "Doctor don't exist!");
-        //Get doctors data
-        Doctor memory doctor = readDoctor(msg.sender);
-        //Create patient with obtained data
-        createPatient(doctor.name, 0, doctor.email, doctor.phone, "", "");
-        //Delete doctor from mapping
-        delete doctorList[msg.sender];
-    }
-
     function createMedicalRecord() public {
         require(medicalRecordList[msg.sender].medicalRecordId == address(0), "Medical record already exist!");
         medicalRecordList[msg.sender].medicalRecordId = msg.sender;
@@ -188,10 +135,6 @@ contract Healthcare {
 
     function readMedicalRecord(address medicalRecordId) public view returns (MedicalRecord memory) {
         require(medicalRecordList[medicalRecordId].medicalRecordId != address(0), "Medical record don't exist!");
-        //A patient can only access his medical record
-        if(compareStrings(user.getUserRole(), "patient")) {
-            require(medicalRecordList[medicalRecordId].medicalRecordId == msg.sender, "You don't have permission to access this data!");
-        }
         return medicalRecordList[medicalRecordId];
     }
 
@@ -203,7 +146,6 @@ contract Healthcare {
                                     string memory bloodType,
                                     bool hasInsurance,
                                     uint[] memory treatmentsIds) public {
-        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
         require(medicalRecordList[medicalRecordId].medicalRecordId != address(0), "Medical record don't exist!");
         //Set medical record data
         medicalRecordList[medicalRecordId].medications = medications;
@@ -222,7 +164,6 @@ contract Healthcare {
                                 uint fromDate,
                                 uint toDate,
                                 uint bill) public {
-        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
         treatmentId += 1;
         require(treatmentList[treatmentId].treatmentId == 0, "Treatment already exist!");
         //Set treatment data
@@ -236,12 +177,8 @@ contract Healthcare {
         treatmentList[treatmentId].bill = bill;
     }
 
-    function readTreatment(uint _treatmentId) public view returns (Treatment memory){
+    function readTreatment(uint _treatmentId) public view returns (Treatment memory) {
         require(treatmentList[_treatmentId].treatmentId != 0, "Treatment don't exist!");
-        //A patient can only access his treatments
-        if(compareStrings(user.getUserRole(), "patient")) {
-            require(treatmentList[_treatmentId].patientId == msg.sender, "You don't have permission to access this data!");
-        }
         return treatmentList[_treatmentId];
     }
 
@@ -253,7 +190,6 @@ contract Healthcare {
                                 uint fromDate,
                                 uint toDate,
                                 uint bill) public {
-        require(compareStrings(user.getUserRole(), "admin") || compareStrings(user.getUserRole(), "doctor"), "You don't have permission!");
         require(treatmentList[_treatmentId].treatmentId != 0, "Treatment don't exist!");
         //Set treatment data
         treatmentList[_treatmentId].patientId = patientId;
@@ -265,13 +201,21 @@ contract Healthcare {
         treatmentList[_treatmentId].bill = bill;
     }
 
+    function getPatientAddresses() public view returns (address[] memory) {
+        return patientAddresses;
+    }
+
+    function getDoctorAddresses() public view returns (address[] memory) {
+        return doctorAddresses;
+    }
+
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 
     function randNumber(uint modulus) private returns(uint) {
-        ++randSalt;
-        return uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, randSalt))) % modulus;
+        ++randomInt;
+        return uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, randomInt))) % modulus;
     }
 
     function getRandomDoctor() private returns(address) {
