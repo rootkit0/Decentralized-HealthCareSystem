@@ -7,7 +7,7 @@ contract HealthcareContract {
     uint private randomInt;
     constructor() public {
         treatmentId = 0;
-        randomInt = 1;
+        randomInt = 0;
     }
 
     struct Patient {
@@ -75,9 +75,14 @@ contract HealthcareContract {
         doctorList[_assignedDoctorId].assignedPatientsIds.push(msg.sender);
     }
 
-    function readPatient(address patientAddress) public view returns(Patient memory) {
+    function readPatient(address patientAddress) public view returns(   string memory name,
+                                                                        uint dateOfBirth,
+                                                                        string memory email,
+                                                                        string memory phone,
+                                                                        string memory homeAddress,
+                                                                        string memory gender) {
         require(patientList[patientAddress].patientId != address(0), "Patient don't exist!");
-        return patientList[patientAddress];
+        return (patientList[patientAddress].name, patientList[patientAddress].dateOfBirth, patientList[patientAddress].email, patientList[patientAddress].phone, patientList[patientAddress].homeAddress, patientList[patientAddress].gender);
     }
 
     function updatePatient( address patientAddress,
@@ -108,9 +113,13 @@ contract HealthcareContract {
         doctorAddresses.push(msg.sender);
     }
 
-    function readDoctor(address doctorAddress) public view returns(Doctor memory) {
+    function readDoctor(address doctorAddress) public view returns( string memory name,
+                                                                    string memory email,
+                                                                    string memory phone,
+                                                                    string memory assignedHospital,
+                                                                    string memory medicalSpeciality) {
         require(doctorList[doctorAddress].doctorId != address(0), "Doctor don't exist!");
-        return doctorList[doctorAddress];
+        return (doctorList[doctorAddress].name, doctorList[doctorAddress].email, doctorList[doctorAddress].phone, doctorList[doctorAddress].assignedHospital, doctorList[doctorAddress].medicalSpeciality);
     }
 
     function updateDoctor(  address doctorAddress,
@@ -133,9 +142,15 @@ contract HealthcareContract {
         medicalRecordList[msg.sender].medicalRecordId = msg.sender;
     }
 
-    function readMedicalRecord(address medicalRecordId) public view returns (MedicalRecord memory) {
+    function readMedicalRecord(address medicalRecordId) public view returns (   string memory medications,
+                                                                                string memory allergies,
+                                                                                string memory illnesses,
+                                                                                string memory immunizations,
+                                                                                string memory bloodType,
+                                                                                bool hasInsurance,
+                                                                                uint[] memory treatmentsIds) {
         require(medicalRecordList[medicalRecordId].medicalRecordId != address(0), "Medical record don't exist!");
-        return medicalRecordList[medicalRecordId];
+        return (medicalRecordList[medicalRecordId].medications, medicalRecordList[medicalRecordId].allergies, medicalRecordList[medicalRecordId].illnesses, medicalRecordList[medicalRecordId].immunizations, medicalRecordList[medicalRecordId].bloodType, medicalRecordList[medicalRecordId].hasInsurance, medicalRecordList[medicalRecordId].treatmentsIds);
     }
 
     function updateMedicalRecord(   address medicalRecordId,
@@ -177,9 +192,15 @@ contract HealthcareContract {
         treatmentList[treatmentId].bill = bill;
     }
 
-    function readTreatment(uint _treatmentId) public view returns (Treatment memory) {
+    function readTreatment(uint _treatmentId) public view returns ( address patientId,
+                                                                    address doctorId,
+                                                                    string memory diagnosis,
+                                                                    string memory medicine,
+                                                                    uint fromDate,
+                                                                    uint toDate,
+                                                                    uint bill) {
         require(treatmentList[_treatmentId].treatmentId != 0, "Treatment don't exist!");
-        return treatmentList[_treatmentId];
+        return (treatmentList[_treatmentId].patientId, treatmentList[_treatmentId].doctorId, treatmentList[_treatmentId].diagnosis, treatmentList[_treatmentId].medicine, treatmentList[_treatmentId].fromDate, treatmentList[_treatmentId].toDate, treatmentList[_treatmentId].bill);
     }
 
     function updateTreatment(   uint _treatmentId,
