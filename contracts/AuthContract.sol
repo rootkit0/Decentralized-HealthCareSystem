@@ -3,14 +3,11 @@ pragma solidity >=0.4.22 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 contract AuthContract {
-    mapping(address => bool) private admins;
-    constructor() public {
+    constructor() public { }
+    function isAdmin() public view returns(bool) {
         //All users admins for testing purposes
         //For final version set specific addresses
-        admins[msg.sender] = true;
-    }
-    function isAdmin() public view returns(bool) {
-        return admins[msg.sender];
+        return true;
     }
 
     struct UserModel {
@@ -29,18 +26,16 @@ contract AuthContract {
         require(validateIdCardNumber(idCardNumber) == true, "Wrong ID Card Number format");
         require(validateHealthCardId(healthCardId) == true, "Wrong HealthCardID format");
         //Register the user
-        address userId = msg.sender;
-        userList[userId].userId = userId;
+        userList[msg.sender].userId = msg.sender;
         if(isAdmin()) {
-            userList[userId].userRole = "admin";
+            userList[msg.sender].userRole = "admin";
         }
         else {
-            //Default user role is patient (only admins can upgrade user roles)
-            userList[userId].userRole = "patient";
+            userList[msg.sender].userRole = "patient";
         }
-        userList[userId].idCardNumber = idCardNumber;
-        userList[userId].healthCardId = healthCardId;
-        userList[userId].passwordHash = passwordHash;
+        userList[msg.sender].idCardNumber = idCardNumber;
+        userList[msg.sender].healthCardId = healthCardId;
+        userList[msg.sender].passwordHash = passwordHash;
         return true;
 	}
 
@@ -54,13 +49,15 @@ contract AuthContract {
         return true;
     }
 
-    function updateUserPassword(address userId, string memory oldPasswordHash, string memory newPasswordHash) public returns(bool) {
+    function updateUserPassword(string memory userId, string memory oldPasswordHash, string memory newPasswordHash) public returns(bool) {
+        //Parse given string to address
+        address userIdAddr = parseAddr(userId);
         //Check that user exists
-        require(userList[userId].userId != address(0), "User don't exists!");
-        //Verify input parameters
-        require(compareStrings(userList[userId].passwordHash, oldPasswordHash), "Passwords don't match!");
+        require(userList[userIdAddr].userId != address(0), "User don't exists!");
+        //Verify old password matches
+        require(compareStrings(userList[userIdAddr].passwordHash, oldPasswordHash), "Passwords don't match!");
         //Update password
-        userList[userId].passwordHash = newPasswordHash;
+        userList[userIdAddr].passwordHash = newPasswordHash;
         return true;
     }
 
@@ -70,11 +67,13 @@ contract AuthContract {
         return userList[msg.sender].userRole;
     }
 
-    function updateUserRole(address userId, string memory userRole) public returns(bool) {
+    function updateUserRole(string memory userId, string memory newUserRole) public returns(bool) {
+        //Parse given string to address
+        address userIdAddr = parseAddr(userId);
         //Check that user exists
-        require(userList[userId].userId != address(0), "User don't exists!");
+        require(userList[userIdAddr].userId != address(0), "User don't exists!");
         //Update user role
-        userList[userId].userRole = userRole;
+        userList[userIdAddr].userRole = newUserRole;
         return true;
     }
 
@@ -114,6 +113,34 @@ contract AuthContract {
             return true;
         }
         return false;
+    }
+
+    function parseAddr(string memory _a) private pure returns (address _parsedAddress) {
+        bytes memory tmp = bytes(_a);
+        uint160 iaddr = 0;
+        uint160 b1;
+        uint160 b2;
+        for (uint i = 2; i < 2 + 2 * 20; i += 2) {
+            iaddr *= 256;
+            b1 = uint160(uint8(tmp[i]));
+            b2 = uint160(uint8(tmp[i + 1]));
+            if ((b1 >= 97) && (b1 <= 102)) {
+                b1 -= 87;
+            } else if ((b1 >= 65) && (b1 <= 70)) {
+                b1 -= 55;
+            } else if ((b1 >= 48) && (b1 <= 57)) {
+                b1 -= 48;
+            }
+            if ((b2 >= 97) && (b2 <= 102)) {
+                b2 -= 87;
+            } else if ((b2 >= 65) && (b2 <= 70)) {
+                b2 -= 55;
+            } else if ((b2 >= 48) && (b2 <= 57)) {
+                b2 -= 48;
+            }
+            iaddr += (b1 * 16 + b2);
+        }
+        return address(iaddr);
     }
 
     function compareStrings(string memory a, string memory b) public pure returns (bool) {
