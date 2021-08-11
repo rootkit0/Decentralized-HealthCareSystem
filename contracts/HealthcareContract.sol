@@ -7,7 +7,7 @@ contract HealthcareContract {
     uint private randomInt;
     constructor() public {
         treatmentId = 0;
-        randomInt = 0;
+        randomInt = 256;
     }
 
     struct Patient {
@@ -20,7 +20,7 @@ contract HealthcareContract {
         string gender;
         address assignedDoctorId;
     }
-    mapping(address => Patient) public patientList;
+    mapping(address => Patient) private patientList;
     address[] private patientAddresses;
 
     struct Doctor {
@@ -32,7 +32,7 @@ contract HealthcareContract {
         string medicalSpeciality;
         address[] assignedPatientsIds;
     }
-    mapping(address => Doctor) public doctorList;
+    mapping(address => Doctor) private doctorList;
     address[] private doctorAddresses;
 
     struct MedicalRecord {
@@ -45,7 +45,7 @@ contract HealthcareContract {
         bool hasInsurance;
         uint[] treatmentsIds;
     }
-    mapping(address => MedicalRecord) public medicalRecordList;
+    mapping(address => MedicalRecord) private medicalRecordList;
 
     struct Treatment {
         uint treatmentId;
@@ -57,7 +57,7 @@ contract HealthcareContract {
         uint toDate;
         uint bill;
     }
-    mapping(uint => Treatment) public treatmentList;
+    mapping(uint => Treatment) private treatmentList;
 
     function createPatient() public {
         require(patientList[msg.sender].patientId == address(0), "Patient already exist!");
@@ -75,31 +75,35 @@ contract HealthcareContract {
         doctorList[_assignedDoctorId].assignedPatientsIds.push(msg.sender);
     }
 
-    function readPatient(address patientAddress) public view returns(   string memory name,
-                                                                        uint dateOfBirth,
-                                                                        string memory email,
-                                                                        string memory phone,
-                                                                        string memory homeAddress,
-                                                                        string memory gender) {
-        require(patientList[patientAddress].patientId != address(0), "Patient don't exist!");
-        return (patientList[patientAddress].name, patientList[patientAddress].dateOfBirth, patientList[patientAddress].email, patientList[patientAddress].phone, patientList[patientAddress].homeAddress, patientList[patientAddress].gender);
+    function readPatient(string memory patientId) public view returns( string memory name,
+                                                                            uint dateOfBirth,
+                                                                            string memory email,
+                                                                            string memory phone,
+                                                                            string memory homeAddress,
+                                                                            string memory gender) {
+        //Parse given string to address
+        address patientIdAddr = parseAddr(patientId);
+        require(patientList[patientIdAddr].patientId != address(0), "Patient don't exist!");
+        return (patientList[patientIdAddr].name, patientList[patientIdAddr].dateOfBirth, patientList[patientIdAddr].email, patientList[patientIdAddr].phone, patientList[patientIdAddr].homeAddress, patientList[patientIdAddr].gender);
     }
 
-    function updatePatient( address patientAddress,
+    function updatePatient( string memory patientId,
                             string memory name,
                             uint dateOfBirth,
                             string memory email,
                             string memory phone,
                             string memory homeAddress,
                             string memory gender) public {
-        require(patientList[patientAddress].patientId != address(0), "Patient don't exist!");
+        //Parse given string to address
+        address patientIdAddr = parseAddr(patientId);
+        require(patientList[patientIdAddr].patientId != address(0), "Patient don't exist!");
         //Set patient data
-        patientList[patientAddress].name = name;
-        patientList[patientAddress].dateOfBirth = dateOfBirth;
-        patientList[patientAddress].email = email;
-        patientList[patientAddress].phone = phone;
-        patientList[patientAddress].homeAddress = homeAddress;
-        patientList[patientAddress].gender = gender;
+        patientList[patientIdAddr].name = name;
+        patientList[patientIdAddr].dateOfBirth = dateOfBirth;
+        patientList[patientIdAddr].email = email;
+        patientList[patientIdAddr].phone = phone;
+        patientList[patientIdAddr].homeAddress = homeAddress;
+        patientList[patientIdAddr].gender = gender;
     }
     
     function createDoctor() public {
@@ -113,28 +117,32 @@ contract HealthcareContract {
         doctorAddresses.push(msg.sender);
     }
 
-    function readDoctor(address doctorAddress) public view returns( string memory name,
-                                                                    string memory email,
-                                                                    string memory phone,
-                                                                    string memory assignedHospital,
-                                                                    string memory medicalSpeciality) {
-        require(doctorList[doctorAddress].doctorId != address(0), "Doctor don't exist!");
-        return (doctorList[doctorAddress].name, doctorList[doctorAddress].email, doctorList[doctorAddress].phone, doctorList[doctorAddress].assignedHospital, doctorList[doctorAddress].medicalSpeciality);
+    function readDoctor(string memory doctorId) public view returns(    string memory name,
+                                                                        string memory email,
+                                                                        string memory phone,
+                                                                        string memory assignedHospital,
+                                                                        string memory medicalSpeciality) {
+        //Parse given string to address
+        address doctorIdAddr = parseAddr(doctorId);                                                                   
+        require(doctorList[doctorIdAddr].doctorId != address(0), "Doctor don't exist!");
+        return (doctorList[doctorIdAddr].name, doctorList[doctorIdAddr].email, doctorList[doctorIdAddr].phone, doctorList[doctorIdAddr].assignedHospital, doctorList[doctorIdAddr].medicalSpeciality);
     }
 
-    function updateDoctor(  address doctorAddress,
+    function updateDoctor(  string memory doctorId,
                             string memory name,
                             string memory email,
                             string memory phone,
                             string memory assignedHospital,
                             string memory medicalSpeciality) public {
-        require(doctorList[doctorAddress].doctorId != address(0), "Doctor don't exist!");
+        //Parse given string to address
+        address doctorIdAddr = parseAddr(doctorId);
+        require(doctorList[doctorIdAddr].doctorId != address(0), "Doctor don't exist!");
         //Set doctor data
-        doctorList[doctorAddress].name = name;
-        doctorList[doctorAddress].email = email;
-        doctorList[doctorAddress].phone = phone;
-        doctorList[doctorAddress].assignedHospital = assignedHospital;
-        doctorList[doctorAddress].medicalSpeciality = medicalSpeciality;
+        doctorList[doctorIdAddr].name = name;
+        doctorList[doctorIdAddr].email = email;
+        doctorList[doctorIdAddr].phone = phone;
+        doctorList[doctorIdAddr].assignedHospital = assignedHospital;
+        doctorList[doctorIdAddr].medicalSpeciality = medicalSpeciality;
     }
 
     function createMedicalRecord() public {
@@ -142,18 +150,20 @@ contract HealthcareContract {
         medicalRecordList[msg.sender].medicalRecordId = msg.sender;
     }
 
-    function readMedicalRecord(address medicalRecordId) public view returns (   string memory medications,
+    function readMedicalRecord(string memory medicalRecordId) public view returns (   string memory medications,
                                                                                 string memory allergies,
                                                                                 string memory illnesses,
                                                                                 string memory immunizations,
                                                                                 string memory bloodType,
                                                                                 bool hasInsurance,
                                                                                 uint[] memory treatmentsIds) {
-        require(medicalRecordList[medicalRecordId].medicalRecordId != address(0), "Medical record don't exist!");
-        return (medicalRecordList[medicalRecordId].medications, medicalRecordList[medicalRecordId].allergies, medicalRecordList[medicalRecordId].illnesses, medicalRecordList[medicalRecordId].immunizations, medicalRecordList[medicalRecordId].bloodType, medicalRecordList[medicalRecordId].hasInsurance, medicalRecordList[medicalRecordId].treatmentsIds);
+        //Parse given string to address
+        address medicalRecordIdAddr = parseAddr(medicalRecordId);
+        require(medicalRecordList[medicalRecordIdAddr].medicalRecordId != address(0), "Medical record don't exist!");
+        return (medicalRecordList[medicalRecordIdAddr].medications, medicalRecordList[medicalRecordIdAddr].allergies, medicalRecordList[medicalRecordIdAddr].illnesses, medicalRecordList[medicalRecordIdAddr].immunizations, medicalRecordList[medicalRecordIdAddr].bloodType, medicalRecordList[medicalRecordIdAddr].hasInsurance, medicalRecordList[medicalRecordIdAddr].treatmentsIds);
     }
 
-    function updateMedicalRecord(   address medicalRecordId,
+    function updateMedicalRecord(   string memory medicalRecordId,
                                     string memory medications,
                                     string memory allergies,
                                     string memory illnesses,
@@ -161,19 +171,21 @@ contract HealthcareContract {
                                     string memory bloodType,
                                     bool hasInsurance,
                                     uint[] memory treatmentsIds) public {
-        require(medicalRecordList[medicalRecordId].medicalRecordId != address(0), "Medical record don't exist!");
+        //Parse given string to address
+        address medicalRecordIdAddr = parseAddr(medicalRecordId);
+        require(medicalRecordList[medicalRecordIdAddr].medicalRecordId != address(0), "Medical record don't exist!");
         //Set medical record data
-        medicalRecordList[medicalRecordId].medications = medications;
-        medicalRecordList[medicalRecordId].allergies = allergies;
-        medicalRecordList[medicalRecordId].illnesses = illnesses;
-        medicalRecordList[medicalRecordId].immunizations = immunizations;
-        medicalRecordList[medicalRecordId].bloodType = bloodType;
-        medicalRecordList[medicalRecordId].hasInsurance = hasInsurance;
-        medicalRecordList[medicalRecordId].treatmentsIds = treatmentsIds;
+        medicalRecordList[medicalRecordIdAddr].medications = medications;
+        medicalRecordList[medicalRecordIdAddr].allergies = allergies;
+        medicalRecordList[medicalRecordIdAddr].illnesses = illnesses;
+        medicalRecordList[medicalRecordIdAddr].immunizations = immunizations;
+        medicalRecordList[medicalRecordIdAddr].bloodType = bloodType;
+        medicalRecordList[medicalRecordIdAddr].hasInsurance = hasInsurance;
+        medicalRecordList[medicalRecordIdAddr].treatmentsIds = treatmentsIds;
     }
 
-    function createTreatment(   address patientId,
-                                address doctorId,
+    function createTreatment(   string memory patientId,
+                                string memory doctorId,
                                 string memory diagnosis,
                                 string memory medicine,
                                 uint fromDate,
@@ -181,10 +193,13 @@ contract HealthcareContract {
                                 uint bill) public {
         treatmentId += 1;
         require(treatmentList[treatmentId].treatmentId == 0, "Treatment already exist!");
+        //Parse given strings to addresses
+        address patientIdAddr = parseAddr(patientId);
+        address doctorIdAddr = parseAddr(doctorId);
         //Set treatment data
         treatmentList[treatmentId].treatmentId = treatmentId;
-        treatmentList[treatmentId].patientId = patientId;
-        treatmentList[treatmentId].doctorId = doctorId;
+        treatmentList[treatmentId].patientId = patientIdAddr;
+        treatmentList[treatmentId].doctorId = doctorIdAddr;
         treatmentList[treatmentId].diagnosis = diagnosis;
         treatmentList[treatmentId].medicine = medicine;
         treatmentList[treatmentId].fromDate = fromDate;
@@ -204,17 +219,20 @@ contract HealthcareContract {
     }
 
     function updateTreatment(   uint _treatmentId,
-                                address patientId,
-                                address doctorId,
+                                string memory patientId,
+                                string memory doctorId,
                                 string memory diagnosis,
                                 string memory medicine,
                                 uint fromDate,
                                 uint toDate,
                                 uint bill) public {
         require(treatmentList[_treatmentId].treatmentId != 0, "Treatment don't exist!");
+        //Parse given strings to addresses
+        address patientIdAddr = parseAddr(patientId);
+        address doctorIdAddr = parseAddr(doctorId);
         //Set treatment data
-        treatmentList[_treatmentId].patientId = patientId;
-        treatmentList[_treatmentId].doctorId = doctorId;
+        treatmentList[_treatmentId].patientId = patientIdAddr;
+        treatmentList[_treatmentId].doctorId = doctorIdAddr;
         treatmentList[_treatmentId].diagnosis = diagnosis;
         treatmentList[_treatmentId].medicine = medicine;
         treatmentList[_treatmentId].fromDate = fromDate;
@@ -230,19 +248,46 @@ contract HealthcareContract {
         return doctorAddresses;
     }
 
-    function compareStrings(string memory a, string memory b) public pure returns (bool) {
+    function compareStrings(string memory a, string memory b) private pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 
-    function randNumber(uint modulus) private returns(uint) {
-        ++randomInt;
+    function randNumber(uint modulus) private view returns(uint) {
         return uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, randomInt))) % modulus;
     }
 
-    function getRandomDoctor() private returns(address) {
-        require(doctorAddresses.length >= 1, "There is no doctor registrated in the system!");
+    function getRandomDoctor() private view returns(address) {
+        require(doctorAddresses.length >= 1, "There is no doctor registered in the system!");
         uint randomPosition = randNumber(doctorAddresses.length);
         require(doctorList[doctorAddresses[randomPosition]].doctorId != address(0), "Doctor don't exist!");
         return doctorAddresses[randomPosition];
+    }
+
+    function parseAddr(string memory _a) private pure returns (address _parsedAddress) {
+        bytes memory tmp = bytes(_a);
+        uint160 iaddr = 0;
+        uint160 b1;
+        uint160 b2;
+        for (uint i = 2; i < 2 + 2 * 20; i += 2) {
+            iaddr *= 256;
+            b1 = uint160(uint8(tmp[i]));
+            b2 = uint160(uint8(tmp[i + 1]));
+            if ((b1 >= 97) && (b1 <= 102)) {
+                b1 -= 87;
+            } else if ((b1 >= 65) && (b1 <= 70)) {
+                b1 -= 55;
+            } else if ((b1 >= 48) && (b1 <= 57)) {
+                b1 -= 48;
+            }
+            if ((b2 >= 97) && (b2 <= 102)) {
+                b2 -= 87;
+            } else if ((b2 >= 65) && (b2 <= 70)) {
+                b2 -= 55;
+            } else if ((b2 >= 48) && (b2 <= 57)) {
+                b2 -= 48;
+            }
+            iaddr += (b1 * 16 + b2);
+        }
+        return address(iaddr);
     }
 }
