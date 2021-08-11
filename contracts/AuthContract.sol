@@ -49,15 +49,13 @@ contract AuthContract {
         return true;
     }
 
-    function updateUserPassword(string memory userId, string memory oldPasswordHash, string memory newPasswordHash) public returns(bool) {
-        //Parse given string to address
-        address userIdAddr = parseAddr(userId);
+    function updateUserPassword(string memory oldPasswordHash, string memory newPasswordHash) public returns(bool) {
         //Check that user exists
-        require(userList[userIdAddr].userId != address(0), "User don't exists!");
+        require(userList[msg.sender].userId != address(0), "User don't exists!");
         //Verify old password matches
-        require(compareStrings(userList[userIdAddr].passwordHash, oldPasswordHash), "Passwords don't match!");
+        require(compareStrings(userList[msg.sender].passwordHash, oldPasswordHash), "Passwords don't match!");
         //Update password
-        userList[userIdAddr].passwordHash = newPasswordHash;
+        userList[msg.sender].passwordHash = newPasswordHash;
         return true;
     }
 
