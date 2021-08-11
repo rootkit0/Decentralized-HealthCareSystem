@@ -75,6 +75,10 @@ contract AuthContract {
         return true;
     }
 
+    function compareStrings(string memory a, string memory b) private pure returns (bool) {
+        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    }
+
     function validateIdCardNumber(string memory idCardNumber) private pure returns(bool) {            
         bytes memory cnId = bytes(idCardNumber);
         if(cnId.length == 9) {
@@ -139,9 +143,5 @@ contract AuthContract {
             iaddr += (b1 * 16 + b2);
         }
         return address(iaddr);
-    }
-
-    function compareStrings(string memory a, string memory b) public pure returns (bool) {
-        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 }
