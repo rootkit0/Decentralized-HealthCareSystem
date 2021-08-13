@@ -237,7 +237,6 @@ contract HealthcareContract {
     }
 
     function updateTreatment(   uint treatmentIde,
-                                string memory patientId,
                                 string memory doctorId,
                                 string memory diagnosis,
                                 string memory medicine,
