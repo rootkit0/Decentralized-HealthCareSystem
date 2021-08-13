@@ -14,7 +14,7 @@ contract AuthContract {
     }
     mapping(address => AuthData) public authList;
 
-	function signupUser(string memory idCardNumber, string memory healthCardId, string memory passwordHash) public {
+	function signupUser(string memory idCardNumber, string memory healthCardId, string memory passwordHash) public returns (bool) {
         //Check that user don't exists
         require(authList[msg.sender].userId == address(0), "User already exists!");
         //Check idCardNumber and healthCardId formats
@@ -25,34 +25,39 @@ contract AuthContract {
         authList[msg.sender].idCardNumber = idCardNumber;
         authList[msg.sender].healthCardId = healthCardId;
         authList[msg.sender].passwordHash = passwordHash;
+        //All users admins for testing purposes, must change!
         authList[msg.sender].userRole = "admin";
+        return true;
 	}
 
-    function loginUser(string memory idCardNumber, string memory healthCardId, string memory passwordHash) public view {
+    function loginUser(string memory idCardNumber, string memory healthCardId, string memory passwordHash) public view returns (bool) {
         //Check that user exists
         require(authList[msg.sender].userId != address(0), "User don't exists!");
         //Verify input parameters
         require(compareStrings(authList[msg.sender].idCardNumber, idCardNumber), "ID Card Number don't match!");
         require(compareStrings(authList[msg.sender].healthCardId, healthCardId), "HealthCardId don't match!");
         require(compareStrings(authList[msg.sender].passwordHash, passwordHash), "Passwords don't match!");
+        return true;
     }
 
-    function updateUserPassword(string memory oldPasswordHash, string memory newPasswordHash) public {
+    function updateUserPassword(string memory oldPasswordHash, string memory newPasswordHash) public returns (bool) {
         //Check that user exists
         require(authList[msg.sender].userId != address(0), "User don't exists!");
         //Verify old password matches
         require(compareStrings(authList[msg.sender].passwordHash, oldPasswordHash), "Passwords don't match!");
         //Update password
         authList[msg.sender].passwordHash = newPasswordHash;
+        return true;
     }
 
-    function updateUserRole(string memory userId, string memory newUserRole) public {
+    function updateUserRole(string memory userId, string memory newUserRole) public returns (bool) {
         //Parse given string to address
         address userIdAddr = parseAddr(userId);
         //Check that user exists
         require(authList[userIdAddr].userId != address(0), "User don't exists!");
         //Update user role
         authList[userIdAddr].userRole = newUserRole;
+        return true;
     }
 
     function readUserRole(string memory userId) public view returns(string memory) {

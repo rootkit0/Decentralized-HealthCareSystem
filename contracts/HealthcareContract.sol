@@ -161,7 +161,7 @@ contract HealthcareContract {
         doctorList[doctorIdAddr].assignedHospital = assignedHospital;
     }
 
-    function createMedicalRecord() public {
+    function createMedicalRecord() private {
         require(medicalRecordList[msg.sender].medicalRecordId == address(0), "Medical record already exist!");
         medicalRecordList[msg.sender].medicalRecordId = msg.sender;
     }
@@ -221,7 +221,7 @@ contract HealthcareContract {
         treatmentList[treatmentId].fromDate = fromDate;
         treatmentList[treatmentId].toDate = toDate;
         treatmentList[treatmentId].bill = bill;
-        //Add treatment to patient medical record
+        //Add treatment to corresponding medical record
         medicalRecordList[patientIdAddr].treatmentsIds.push(treatmentId);
     }
 
@@ -234,6 +234,29 @@ contract HealthcareContract {
                                                                     uint bill) {
         require(treatmentList[_treatmentId].treatmentId != 0, "Treatment don't exist!");
         return (treatmentList[_treatmentId].patientId, treatmentList[_treatmentId].doctorId, treatmentList[_treatmentId].diagnosis, treatmentList[_treatmentId].medicine, treatmentList[_treatmentId].fromDate, treatmentList[_treatmentId].toDate, treatmentList[_treatmentId].bill);
+    }
+
+    function updateTreatment(   uint treatmentIde,
+                                string memory patientId,
+                                string memory doctorId,
+                                string memory diagnosis,
+                                string memory medicine,
+                                uint fromDate,
+                                uint toDate,
+                                uint bill) public {
+        require(treatmentList[treatmentIde].treatmentId != 0, "Treatment don't exist!");
+        //Parse given strings to addresses
+        //address patientIdAddr = parseAddr(patientId);
+        address doctorIdAddr = parseAddr(doctorId);
+        //Set treatment data
+        //treatmentList[treatmentId].treatmentId = treatmentId;
+        //treatmentList[treatmentId].patientId = patientIdAddr;
+        treatmentList[treatmentIde].doctorId = doctorIdAddr;
+        treatmentList[treatmentIde].diagnosis = diagnosis;
+        treatmentList[treatmentIde].medicine = medicine;
+        treatmentList[treatmentIde].fromDate = fromDate;
+        treatmentList[treatmentIde].toDate = toDate;
+        treatmentList[treatmentIde].bill = bill;
     }
 
     function getPatientAddresses() public view returns (address[] memory) {
