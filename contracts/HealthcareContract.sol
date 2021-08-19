@@ -286,15 +286,15 @@ contract HealthcareContract {
         //Parse given strings to addresses
         address patientIdAddr = parseAddr(patientId);
         address doctorIdAddr = parseAddr(doctorId);
-        //Set treatment data
-        medicalVisitList[treatmentId].medicalVisitId = medicalVisitId;
-        medicalVisitList[treatmentId].patientId = patientIdAddr;
-        medicalVisitList[treatmentId].doctorId = doctorIdAddr;
-        medicalVisitList[treatmentId].dateVisit = dateVisit;
-        medicalVisitList[treatmentId].hourVisit = hourVisit;
-        medicalVisitList[treatmentId].symptoms = symptoms;
-        medicalVisitList[treatmentId].urgency = urgency;
-        //Add treatment to corresponding medical records
+        //Set visit data
+        medicalVisitList[medicalVisitId].medicalVisitId = medicalVisitId;
+        medicalVisitList[medicalVisitId].patientId = patientIdAddr;
+        medicalVisitList[medicalVisitId].doctorId = doctorIdAddr;
+        medicalVisitList[medicalVisitId].dateVisit = dateVisit;
+        medicalVisitList[medicalVisitId].hourVisit = hourVisit;
+        medicalVisitList[medicalVisitId].symptoms = symptoms;
+        medicalVisitList[medicalVisitId].urgency = urgency;
+        //Add visit to corresponding medical records
         medicalRecordList[patientIdAddr].medicalVisitsIds.push(medicalVisitId);
         medicalRecordList[doctorIdAddr].medicalVisitsIds.push(medicalVisitId);
     }
