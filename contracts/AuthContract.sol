@@ -12,7 +12,7 @@ contract AuthContract {
         string passwordHash;
         string userRole;
     }
-    mapping(address => AuthData) public authList;
+    mapping(address => AuthData) private authList;
 
 	function signupUser(string memory idCardNumber, string memory healthCardId, string memory passwordHash) public returns (bool) {
         //Check that user don't exists
@@ -25,7 +25,7 @@ contract AuthContract {
         authList[msg.sender].idCardNumber = idCardNumber;
         authList[msg.sender].healthCardId = healthCardId;
         authList[msg.sender].passwordHash = passwordHash;
-        //All users admins for testing purposes, must change!
+        //All users admins for testing purposes
         authList[msg.sender].userRole = "admin";
         return true;
 	}

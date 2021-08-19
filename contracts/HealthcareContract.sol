@@ -79,7 +79,6 @@ contract HealthcareContract {
     
     function createPatient() public {
         require(patientList[msg.sender].patientId == address(0), "Patient already exist!");
-        require(doctorList[msg.sender].doctorId == address(0), "This address is assigned to a doctor!");
         //Set address and add to the list
         patientList[msg.sender].patientId = msg.sender;
         patientAddresses.push(msg.sender);
@@ -129,7 +128,6 @@ contract HealthcareContract {
     
     function createDoctor() public {
         require(doctorList[msg.sender].doctorId == address(0), "Doctor already exist!");
-        require(patientList[msg.sender].patientId == address(0), "This address is assigned to a patient!");
         //Set address and add to the list
         doctorList[msg.sender].doctorId = msg.sender;
         doctorAddresses.push(msg.sender);
