@@ -4,9 +4,11 @@ pragma experimental ABIEncoderV2;
 
 contract HealthcareContract {
     uint private treatmentId;
+    uint private medicalVisitId;
     uint private randomInt;
     constructor() public {
         treatmentId = 0;
+        medicalVisitId = 0;
         randomInt = 256;
     }
 
@@ -48,6 +50,7 @@ contract HealthcareContract {
         string bloodType;
         bool hasInsurance;
         uint[] treatmentsIds;
+        uint[] medicalVisitsIds;
     }
     mapping(address => MedicalRecord) private medicalRecordList;
 
@@ -62,6 +65,17 @@ contract HealthcareContract {
         uint bill;
     }
     mapping(uint => Treatment) private treatmentList;
+
+    struct MedicalVisit {
+        uint medicalVisitId;
+        address patientId;
+        address doctorId;
+        uint dateVisit;
+        uint hourVisit;
+        string symptoms;
+        bool urgency;
+    }
+    mapping(uint => MedicalVisit) private medicalVisitList;
     
     function createPatient() public {
         require(patientList[msg.sender].patientId == address(0), "Patient already exist!");
@@ -172,11 +186,12 @@ contract HealthcareContract {
                                                                                     string memory immunizations,
                                                                                     string memory bloodType,
                                                                                     bool hasInsurance,
-                                                                                    uint[] memory treatmentsIds) {
+                                                                                    uint[] memory treatmentsIds,
+                                                                                    uint[] memory medicalVisitsIds) {
         //Parse given string to address
         address medicalRecordIdAddr = parseAddr(medicalRecordId);
         require(medicalRecordList[medicalRecordIdAddr].medicalRecordId != address(0), "Medical record don't exist!");
-        return (medicalRecordList[medicalRecordIdAddr].medications, medicalRecordList[medicalRecordIdAddr].allergies, medicalRecordList[medicalRecordIdAddr].illnesses, medicalRecordList[medicalRecordIdAddr].immunizations, medicalRecordList[medicalRecordIdAddr].bloodType, medicalRecordList[medicalRecordIdAddr].hasInsurance, medicalRecordList[medicalRecordIdAddr].treatmentsIds);
+        return (medicalRecordList[medicalRecordIdAddr].medications, medicalRecordList[medicalRecordIdAddr].allergies, medicalRecordList[medicalRecordIdAddr].illnesses, medicalRecordList[medicalRecordIdAddr].immunizations, medicalRecordList[medicalRecordIdAddr].bloodType, medicalRecordList[medicalRecordIdAddr].hasInsurance, medicalRecordList[medicalRecordIdAddr].treatmentsIds, medicalRecordList[medicalRecordIdAddr].medicalVisitsIds);
     }
 
     function updateMedicalRecord(   string memory medicalRecordId,
@@ -186,7 +201,8 @@ contract HealthcareContract {
                                     string memory immunizations,
                                     string memory bloodType,
                                     bool hasInsurance,
-                                    uint[] memory treatmentsIds) public {
+                                    uint[] memory treatmentsIds,
+                                    uint[] memory medicalVisitsIds) public {
         //Parse given string to address
         address medicalRecordIdAddr = parseAddr(medicalRecordId);
         require(medicalRecordList[medicalRecordIdAddr].medicalRecordId != address(0), "Medical record don't exist!");
@@ -198,6 +214,7 @@ contract HealthcareContract {
         medicalRecordList[medicalRecordIdAddr].bloodType = bloodType;
         medicalRecordList[medicalRecordIdAddr].hasInsurance = hasInsurance;
         medicalRecordList[medicalRecordIdAddr].treatmentsIds = treatmentsIds;
+        medicalRecordList[medicalRecordIdAddr].medicalVisitsIds = medicalVisitsIds;
     }
 
     function createTreatment(   string memory patientId,
@@ -256,6 +273,40 @@ contract HealthcareContract {
         treatmentList[treatmentIde].fromDate = fromDate;
         treatmentList[treatmentIde].toDate = toDate;
         treatmentList[treatmentIde].bill = bill;
+    }
+
+    function createMedicalVisit(string memory patientId,
+                                string memory doctorId,
+                                uint dateVisit,
+                                uint hourVisit,
+                                string memory symptoms,
+                                bool urgency) public {
+        medicalVisitId += 1;
+        require(medicalVisitList[medicalVisitId].medicalVisitId == 0, "Medical visit already exist!");
+        //Parse given strings to addresses
+        address patientIdAddr = parseAddr(patientId);
+        address doctorIdAddr = parseAddr(doctorId);
+        //Set treatment data
+        medicalVisitList[treatmentId].medicalVisitId = medicalVisitId;
+        medicalVisitList[treatmentId].patientId = patientIdAddr;
+        medicalVisitList[treatmentId].doctorId = doctorIdAddr;
+        medicalVisitList[treatmentId].dateVisit = dateVisit;
+        medicalVisitList[treatmentId].hourVisit = hourVisit;
+        medicalVisitList[treatmentId].symptoms = symptoms;
+        medicalVisitList[treatmentId].urgency = urgency;
+        //Add treatment to corresponding medical records
+        medicalRecordList[patientIdAddr].medicalVisitsIds.push(medicalVisitId);
+        medicalRecordList[doctorIdAddr].medicalVisitsIds.push(medicalVisitId);
+    }
+
+    function readMedicalVisit(uint _medicalVisitId) public view returns (   address patientId,
+                                                                            address doctorId,
+                                                                            uint dateVisit,
+                                                                            uint hourVisit,
+                                                                            string memory symptoms,
+                                                                            bool urgency) {
+        require(medicalVisitList[_medicalVisitId].medicalVisitId != 0, "Medical visit don't exist!");
+        return (medicalVisitList[_medicalVisitId].patientId, medicalVisitList[_medicalVisitId].doctorId, medicalVisitList[_medicalVisitId].dateVisit, medicalVisitList[_medicalVisitId].hourVisit, medicalVisitList[_medicalVisitId].symptoms, medicalVisitList[_medicalVisitId].urgency);
     }
 
     function getPatientAddresses() public view returns (address[] memory) {
