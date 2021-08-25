@@ -71,7 +71,7 @@ contract HealthcareContract {
         address patientId;
         address doctorId;
         uint dateVisit;
-        uint hourVisit;
+        string hourVisit;
         string symptoms;
         bool urgency;
     }
@@ -277,7 +277,7 @@ contract HealthcareContract {
     function createMedicalVisit(string memory patientId,
                                 string memory doctorId,
                                 uint dateVisit,
-                                uint hourVisit,
+                                string memory hourVisit,
                                 string memory symptoms,
                                 bool urgency) public {
         medicalVisitId += 1;
@@ -301,7 +301,7 @@ contract HealthcareContract {
     function readMedicalVisit(uint _medicalVisitId) public view returns (   address patientId,
                                                                             address doctorId,
                                                                             uint dateVisit,
-                                                                            uint hourVisit,
+                                                                            string memory hourVisit,
                                                                             string memory symptoms,
                                                                             bool urgency) {
         require(medicalVisitList[_medicalVisitId].medicalVisitId != 0, "Medical visit don't exist!");
